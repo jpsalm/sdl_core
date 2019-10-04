@@ -40,8 +40,10 @@
 #include "application_manager/mock_app_service_manager.h"
 #include "application_manager/mock_application.h"
 #include "application_manager/mock_application_manager.h"
+#include "application_manager/mock_command_factory.h"
 #include "application_manager/mock_command_holder.h"
 #include "application_manager/mock_message_helper.h"
+#include "application_manager/mock_request.h"
 #include "application_manager/mock_request_controller_settings.h"
 #include "application_manager/mock_rpc_plugin.h"
 #include "application_manager/mock_rpc_plugin_manager.h"
@@ -72,6 +74,7 @@ const connection_handler::DeviceHandle kDeviceHandle = 1u;
 const std::string kPolicyAppId = "policy_app_id";
 const uint32_t kCorrelationId = 1u;
 const uint32_t kFunctionId = 1u;
+const uint32_t kAppId = 1u;
 }  // namespace
 
 class RPCServiceImplTest : public ::testing::Test {
@@ -129,6 +132,7 @@ class RPCServiceImplTest : public ::testing::Test {
   testing::NiceMock<am::plugin_manager::MockRPCPluginManager>
       mock_rpc_plugin_manager_;
   testing::NiceMock<am::plugin_manager::MockRPCPlugin> mock_rpc_plugin_;
+  testing::NiceMock<MockCommandFactory> mock_command_factory_;
 };
 
 TEST_F(RPCServiceImplTest, ManageMobileCommand_MessageIsNullPtr_False) {
@@ -217,7 +221,82 @@ TEST_F(RPCServiceImplTest, ManageHMICommand_PluginIsEmpty_False) {
   ASSERT_FALSE(rpc_service_->ManageHMICommand(message, source));
 }
 
-TEST_F(RPCServiceImplTest, ManageHMICommand) {}
+TEST_F(RPCServiceImplTest, ManageHMICommand_FailedCreateCommand_False) {
+  auto message = CreateMessage();
+  auto source = am::commands::Command::CommandSource::SOURCE_HMI;
+  (*message)[am::strings::params][am::strings::function_id] = kFunctionId;
+  ON_CALL(mock_app_mngr_, IsLowVoltage()).WillByDefault(Return(false));
+  ON_CALL(mock_app_mngr_, GetPluginManager())
+      .WillByDefault(ReturnRef(mock_rpc_plugin_manager_));
+  typedef am::plugin_manager::RPCPlugin RPCPlugin;
+  utils::Optional<RPCPlugin> mock_rpc_plugin_opt = mock_rpc_plugin_;
+  ON_CALL(mock_rpc_plugin_manager_, FindPluginToProcess(kFunctionId, source))
+      .WillByDefault(Return(mock_rpc_plugin_opt));
+  ON_CALL(mock_rpc_plugin_, GetCommandFactory())
+      .WillByDefault(ReturnRef(mock_command_factory_));
+  std::shared_ptr<MockRequest> cmd;
+  ON_CALL(mock_command_factory_, CreateCommand(message, source))
+      .WillByDefault(Return(cmd));
+  ASSERT_FALSE(rpc_service_->ManageHMICommand(message, source));
+}
+
+TEST_F(RPCServiceImplTest, ManageHMICommand_IsAppInReconnectMode_True) {
+  auto message = CreateMessage();
+  auto source = am::commands::Command::CommandSource::SOURCE_HMI;
+  (*message)[am::strings::params][am::strings::function_id] = kFunctionId;
+  (*message)[am::strings::msg_params][am::strings::app_id] = kAppId;
+  ON_CALL(mock_app_mngr_, IsLowVoltage()).WillByDefault(Return(false));
+  ON_CALL(mock_app_mngr_, GetPluginManager())
+      .WillByDefault(ReturnRef(mock_rpc_plugin_manager_));
+  typedef am::plugin_manager::RPCPlugin RPCPlugin;
+  utils::Optional<RPCPlugin> mock_rpc_plugin_opt = mock_rpc_plugin_;
+  ON_CALL(mock_rpc_plugin_manager_, FindPluginToProcess(kFunctionId, source))
+      .WillByDefault(Return(mock_rpc_plugin_opt));
+  ON_CALL(mock_rpc_plugin_, GetCommandFactory())
+      .WillByDefault(ReturnRef(mock_command_factory_));
+  std::shared_ptr<MockRequest> cmd =
+      std::make_shared<MockRequest>(kConnectionKey, kCorrelationId);
+  ON_CALL(mock_command_factory_, CreateCommand(message, source))
+      .WillByDefault(Return(cmd));
+
+  auto mock_app = std::make_shared<NiceMock<MockApplication> >();
+  ON_CALL(mock_app_mngr_, application(kConnectionKey))
+      .WillByDefault(Return(mock_app));
+  const connection_handler::DeviceHandle device_id1 = 1u;
+  ON_CALL(*mock_app, device()).WillByDefault(Return(device_id1));
+  ON_CALL(*mock_app, policy_app_id()).WillByDefault(Return(kPolicyAppId));
+
+  ON_CALL(mock_app_mngr_, IsAppInReconnectMode(device_id1, kPolicyAppId))
+      .WillByDefault(Return(true));
+  EXPECT_CALL(mock_command_holder_,
+              Suspend(static_cast<am::ApplicationSharedPtr>(mock_app),
+                      am::CommandHolder::CommandType::kHmiCommand,
+                      source,
+                      message))
+      .WillOnce(Return());
+  ASSERT_TRUE(rpc_service_->ManageHMICommand(message, source));
+}
+
+TEST_F(RPCServiceImplTest, ManageHMICommand_MessageTypeRequest_ReturnFalse) {
+    auto message = CreateMessage();
+    auto source = am::commands::Command::CommandSource::SOURCE_HMI;
+    (*message)[am::strings::params][am::strings::function_id] = kFunctionId;
+    (*message)[am::strings::params][am::strings::message_type] = am::kRequest;
+    ON_CALL(mock_app_mngr_, IsLowVoltage()).WillByDefault(Return(false));
+    ON_CALL(mock_app_mngr_, GetPluginManager())
+        .WillByDefault(ReturnRef(mock_rpc_plugin_manager_));
+    typedef am::plugin_manager::RPCPlugin RPCPlugin;
+    utils::Optional<RPCPlugin> mock_rpc_plugin_opt = mock_rpc_plugin_;
+    ON_CALL(mock_rpc_plugin_manager_, FindPluginToProcess(kFunctionId, source))
+        .WillByDefault(Return(mock_rpc_plugin_opt));
+    ON_CALL(mock_rpc_plugin_, GetCommandFactory())
+        .WillByDefault(ReturnRef(mock_command_factory_));
+    std::shared_ptr<MockRequest> cmd =
+        std::make_shared<MockRequest>(kConnectionKey, kCorrelationId);
+    ON_CALL(mock_command_factory_, CreateCommand(message, source))
+        .WillByDefault(Return(cmd));
+    rpc_service_->ManageHMICommand(message, source);
+}
 
 }  // namespace application_manager_test
 
