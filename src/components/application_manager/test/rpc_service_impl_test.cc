@@ -277,7 +277,8 @@ TEST_F(RPCServiceImplTest, ManageHMICommand_IsAppInReconnectMode_True) {
   ASSERT_TRUE(rpc_service_->ManageHMICommand(message, source));
 }
 
-TEST_F(RPCServiceImplTest, ManageHMICommand_MessageTypeUnknownTypeCommandNotInit_ReturnFalse) {
+TEST_F(RPCServiceImplTest,
+       ManageHMICommand_MessageTypeUnknownTypeCommandNotInit_ReturnFalse) {
   auto message = CreateMessage();
   auto source = am::commands::Command::CommandSource::SOURCE_HMI;
   (*message)[am::strings::params][am::strings::function_id] = kFunctionId;
@@ -301,10 +302,9 @@ TEST_F(RPCServiceImplTest, ManageHMICommand_MessageTypeUnknownTypeCommandNotInit
 }
 
 TEST_F(RPCServiceImplTest, SendMessageToMobile) {
-    MessageSharedPtr message;
-    EXPECT_CALL(mock_app_mngr_, application(_)).Times(0);
-    rpc_service_->SendMessageToMobile(message);
-
+  MessageSharedPtr message;
+  EXPECT_CALL(mock_app_mngr_, application(_)).Times(0);
+  rpc_service_->SendMessageToMobile(message);
 }
 
 }  // namespace application_manager_test
