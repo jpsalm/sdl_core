@@ -243,7 +243,11 @@ void PerformInteractionRequest::on_event(const event_engine::Event& event) {
       LOG4CXX_DEBUG(logger_, "Received UI_PerformInteraction event");
       EndAwaitForInterface(HmiInterfaces::HMI_INTERFACE_UI);
       ui_response_received_ = true;
-      StoreFirstAnsweredInterface(FirstAnsweredInterface::UI);
+
+      if (FirstAnsweredInterface::NONE == first_responder_) {
+        first_responder_ = FirstAnsweredInterface::UI;
+      }
+
       unsubscribe_from_event(hmi_apis::FunctionID::UI_PerformInteraction);
       ui_result_code_ = static_cast<hmi_apis::Common_Result::eType>(
           message[strings::params][hmi_response::code].asUInt());
@@ -255,7 +259,11 @@ void PerformInteractionRequest::on_event(const event_engine::Event& event) {
       LOG4CXX_DEBUG(logger_, "Received VR_PerformInteraction");
       EndAwaitForInterface(HmiInterfaces::HMI_INTERFACE_VR);
       vr_response_received_ = true;
-      StoreFirstAnsweredInterface(FirstAnsweredInterface::VR);
+
+      if (FirstAnsweredInterface::NONE == first_responder_) {
+        first_responder_ = FirstAnsweredInterface::VR;
+      }
+
       unsubscribe_from_event(hmi_apis::FunctionID::VR_PerformInteraction);
       vr_result_code_ = static_cast<hmi_apis::Common_Result::eType>(
           message[strings::params][hmi_response::code].asUInt());
@@ -1149,13 +1157,6 @@ bool PerformInteractionRequest::
   app_mngr::commands::ResponseInfo vr_perform_info(
       vr_result_code_, HmiInterfaces::HMI_INTERFACE_VR, application_manager_);
   return (vr_perform_info.is_ok && InteractionMode::BOTH == interaction_mode_);
-}
-
-void PerformInteractionRequest::StoreFirstAnsweredInterface(
-    FirstAnsweredInterface responder) {
-  if (FirstAnsweredInterface::NONE == first_responder_) {
-    first_responder_ = responder;
-  }
 }
 
 }  // namespace commands

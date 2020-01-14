@@ -274,12 +274,6 @@ class PerformInteractionRequest
    */
   bool IsVRPerformInteractionResponseSuccessfulInBothMode();
 
-  /**
-   * @brief Stores first response type to PerformInteraction request that comes.
-   * @param enum FirstAnsweredInterface
-   */
-  void StoreFirstAnsweredInterface(FirstAnsweredInterface responder);
-
   mobile_apis::InteractionMode::eType interaction_mode_;
   bool ui_response_received_;
   bool vr_response_received_;
