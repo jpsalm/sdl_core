@@ -32,7 +32,9 @@
  */
 
 #include "sdl_rpc_plugin/commands/mobile/perform_interaction_request.h"
+
 #include <string.h>
+#include <limits>
 #include <numeric>
 #include <string>
 
@@ -45,6 +47,10 @@
 #include "utils/file_system.h"
 #include "utils/gen_hash.h"
 #include "utils/helpers.h"
+
+namespace {
+const std::int32_t INVALID_CHOICE_ID = std::numeric_limits<std::int32_t>::max();
+}
 
 namespace sdl_rpc_plugin {
 using namespace application_manager;
@@ -67,6 +73,8 @@ PerformInteractionRequest::PerformInteractionRequest(
                          hmi_capabilities,
                          policy_handler)
     , interaction_mode_(mobile_apis::InteractionMode::INVALID_ENUM)
+    , ui_choice_id_received_(INVALID_CHOICE_ID)
+    , vr_choice_id_received_(INVALID_CHOICE_ID)
     , ui_response_received_(false)
     , vr_response_received_(false)
     , app_pi_was_active_before_(false)
@@ -287,10 +295,12 @@ void PerformInteractionRequest::on_event(const event_engine::Event& event) {
     const bool send_vr_params_only =
         (FirstAnsweredInterface::VR == first_responder_ &&
          mobile_apis::InteractionMode::VR_ONLY == interaction_mode_);
-    if (send_vr_params_only ||
-        IsVRPerformInteractionResponseSuccessfulInBothMode()) {
+
+    if (send_vr_params_only) {
+      SetChoiceIdToResponseMsgParams(vr_params_);
       SendBothModeResponse(vr_params_);
     } else {
+      SetChoiceIdToResponseMsgParams(msg_param);
       SendBothModeResponse(msg_param);
     }
     first_responder_ = FirstAnsweredInterface::NONE;
@@ -392,7 +402,7 @@ bool PerformInteractionRequest::ProcessVRResponse(
           false, Result::GENERIC_ERROR, "Wrong choiceID was received from HMI");
       return true;
     }
-    msg_params[strings::choice_id] = choice_id;
+    vr_choice_id_received_ = choice_id;
   }
 
   if (mobile_apis::InteractionMode::BOTH == interaction_mode_ ||
@@ -433,8 +443,8 @@ void PerformInteractionRequest::ProcessUIResponse(
   HmiInterfaces::InterfaceState ui_interface_state =
       application_manager_.hmi_interfaces().GetInterfaceState(
           HmiInterfaces::HMI_INTERFACE_UI);
-  bool result = false;
-  result = Compare<hmi_apis::Common_Result::eType, EQ, ONE>(
+
+  bool result = Compare<hmi_apis::Common_Result::eType, EQ, ONE>(
       ui_result_code_,
       hmi_apis::Common_Result::SUCCESS,
       hmi_apis::Common_Result::WARNINGS);
@@ -466,11 +476,14 @@ void PerformInteractionRequest::ProcessUIResponse(
 
     // result code must be GENERIC_ERROR in case wrong choice_id
     if (msg_params.keyExists(strings::choice_id)) {
-      if (!CheckChoiceIDFromResponse(app,
-                                     msg_params[strings::choice_id].asInt())) {
+      const std::int32_t ui_choise_id =
+          static_cast<std::int32_t>(msg_params[strings::choice_id].asInt());
+
+      if (!CheckChoiceIDFromResponse(app, ui_choise_id)) {
         ui_result_code_ = hmi_apis::Common_Result::GENERIC_ERROR;
         ui_info_ = "Wrong choiceID was received from HMI";
       } else {
+        ui_choice_id_received_ = ui_choise_id;
         msg_params[strings::trigger_source] =
             mobile_apis::TriggerSource::TS_MENU;
       }
@@ -975,7 +988,7 @@ void PerformInteractionRequest::TerminatePerformInteraction() {
 }
 
 bool PerformInteractionRequest::CheckChoiceIDFromResponse(
-    ApplicationSharedPtr app, int32_t choice_id) {
+    ApplicationSharedPtr app, const int32_t choice_id) {
   LOG4CXX_AUTO_TRACE(logger_);
   const DataAccessor<PerformChoiceSetMap> accessor =
       app->performinteraction_choice_set_map();
@@ -987,12 +1000,14 @@ bool PerformInteractionRequest::CheckChoiceIDFromResponse(
     const PerformChoice& choice = choice_set_map_it->second;
     PerformChoice::const_iterator it = choice.begin();
     for (; choice.end() != it; ++it) {
-      const smart_objects::SmartObject& choice_set =
-          (*it->second).getElement(strings::choice_set);
-      for (size_t j = 0; j < choice_set.length(); ++j) {
-        if (choice_id ==
-            choice_set.getElement(j).getElement(strings::choice_id).asInt()) {
-          return true;
+      if ((*it->second).keyExists(strings::choice_set)) {
+        const smart_objects::SmartObject& choice_set =
+            (*it->second).getElement(strings::choice_set);
+        for (size_t j = 0; j < choice_set.length(); ++j) {
+          if (choice_id ==
+              choice_set.getElement(j).getElement(strings::choice_id).asInt()) {
+            return true;
+          }
         }
       }
     }
@@ -1157,6 +1172,37 @@ bool PerformInteractionRequest::
   app_mngr::commands::ResponseInfo vr_perform_info(
       vr_result_code_, HmiInterfaces::HMI_INTERFACE_VR, application_manager_);
   return (vr_perform_info.is_ok && InteractionMode::BOTH == interaction_mode_);
+}
+
+void PerformInteractionRequest::SetChoiceIdToResponseMsgParams(
+    ns_smart_device_link::ns_smart_objects::SmartObject& msg_param) {
+  LOG4CXX_AUTO_TRACE(logger_);
+
+  std::int32_t choice_id = INVALID_CHOICE_ID;
+
+  switch (interaction_mode_) {
+    case mobile_apis::InteractionMode::eType::MANUAL_ONLY: {
+      if (INVALID_CHOICE_ID != ui_choice_id_received_) {
+        choice_id = ui_choice_id_received_;
+      }
+    } break;
+    case mobile_apis::InteractionMode::eType::VR_ONLY:
+      if (INVALID_CHOICE_ID != vr_choice_id_received_) {
+        choice_id = ui_choice_id_received_;
+      }
+      break;
+    case mobile_apis::InteractionMode::eType::BOTH:
+      choice_id = (first_responder_ == FirstAnsweredInterface::UI) &&
+                          (INVALID_CHOICE_ID != ui_choice_id_received_)
+                      ? ui_choice_id_received_
+                      : vr_choice_id_received_;
+      break;
+    default:
+      LOG4CXX_DEBUG(logger_, "Invalid interaction mode: " << interaction_mode_);
+      return;
+  }
+
+  msg_param[strings::choice_id] = choice_id;
 }
 
 }  // namespace commands

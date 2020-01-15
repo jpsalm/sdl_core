@@ -229,7 +229,7 @@ class PerformInteractionRequest
    * otherwise returns FALSE.
    */
   bool CheckChoiceIDFromResponse(app_mngr::ApplicationSharedPtr app,
-                                 int32_t choice_id);
+                                 const int32_t choice_id);
 
   /**
    * @brief Checks for a match of choice ID, in
@@ -274,7 +274,19 @@ class PerformInteractionRequest
    */
   bool IsVRPerformInteractionResponseSuccessfulInBothMode();
 
+  /**
+   * @brief Sets the choice according to the current interaction mode and first
+   * received choice id (UI or VR).
+   *
+   * @param msg_param Message parameters which will be included in the response
+   * to mobile device.
+   */
+  void SetChoiceIdToResponseMsgParams(smart_objects::SmartObject& msg_param);
+
   mobile_apis::InteractionMode::eType interaction_mode_;
+  std::int32_t ui_choice_id_received_;
+  std::int32_t vr_choice_id_received_;
+
   bool ui_response_received_;
   bool vr_response_received_;
   bool app_pi_was_active_before_;
