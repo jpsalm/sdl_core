@@ -70,20 +70,47 @@ namespace strings = ::application_manager::strings;
 namespace hmi_response = ::application_manager::hmi_response;
 
 namespace {
+const int32_t kCorrelationId = 1u;
 const int32_t kCommandId = 1;
 const uint32_t kCmdId = 1u;
 const uint32_t kConnectionKey = 2u;
+const int32_t ui_choice_id1 = 1u;
+const int32_t vr_choice_id2 = 2u;
 }  // namespace
 
 class PerformInteractionRequestTest
     : public CommandRequestTest<CommandsTestMocks::kIsNice> {
  public:
-  PerformInteractionRequestTest() : mock_app_(CreateMockApp()) {}
+  PerformInteractionRequestTest()
+      : mock_app_(CreateMockApp())
+      , performinteraction_choice_set_lock_ptr_(
+            std::make_shared<sync_primitives::RecursiveLock>()) {}
 
   void SetUp() OVERRIDE {
+    smart_objects::SmartObject choice_set1(
+        smart_objects::SmartType::SmartType_Map);
+    smart_objects::SmartObject choice_set2(
+        smart_objects::SmartType::SmartType_Map);
+
+    choice_set1[strings::choice_set] =
+        smart_objects::SmartType::SmartType_Array;
+    choice_set2[strings::choice_set] =
+        smart_objects::SmartType::SmartType_Array;
+
+    choice_set1[strings::choice_set][0][strings::choice_id] = ui_choice_id1;
+    choice_set2[strings::choice_set][0][strings::choice_id] = vr_choice_id2;
+
+    choice_set_map_[kCorrelationId].insert(std::make_pair(
+        ui_choice_id1, new smart_objects::SmartObject(choice_set1)));
+    choice_set_map_[kCorrelationId].insert(std::make_pair(
+        vr_choice_id2, new smart_objects::SmartObject(choice_set2)));
+
     ON_CALL(app_mngr_, application(kConnectionKey))
         .WillByDefault(Return(mock_app_));
     ON_CALL(*mock_app_, app_id()).WillByDefault(Return(kConnectionKey));
+    ON_CALL(*mock_app_, performinteraction_choice_set_map())
+        .WillByDefault(Return(DataAccessor<app_mngr::PerformChoiceSetMap>(
+            choice_set_map_, performinteraction_choice_set_lock_ptr_)));
   }
 
   void ResultCommandExpectations(MessageSharedPtr msg,
@@ -110,6 +137,9 @@ class PerformInteractionRequestTest
 
   sync_primitives::Lock lock_;
   MockAppPtr mock_app_;
+  app_mngr::PerformChoiceSetMap choice_set_map_;
+  mutable std::shared_ptr<sync_primitives::RecursiveLock>
+      performinteraction_choice_set_lock_ptr_;
 };
 
 TEST_F(PerformInteractionRequestTest, OnTimeout_VR_GENERIC_ERROR) {
@@ -155,6 +185,103 @@ TEST_F(PerformInteractionRequestTest, OnTimeout_VR_GENERIC_ERROR) {
   EXPECT_EQ(
       (*vr_command_result)[strings::msg_params][strings::result_code].asInt(),
       static_cast<int32_t>(am::mobile_api::Result::GENERIC_ERROR));
+}
+
+TEST_F(PerformInteractionRequestTest, OnEven_BOTHMode_UIChoiceIdReceivedFirst) {
+  MessageSharedPtr msg_from_mobile =
+      CreateMessage(smart_objects::SmartType_Map);
+  (*msg_from_mobile)[strings::params][strings::correlation_id] = kCorrelationId;
+  (*msg_from_mobile)[strings::params][strings::connection_key] = kConnectionKey;
+  (*msg_from_mobile)[strings::msg_params][strings::interaction_mode] =
+      mobile_apis::InteractionMode::BOTH;
+  std::shared_ptr<PerformInteractionRequest> command =
+      CreateCommand<PerformInteractionRequest>(msg_from_mobile);
+
+  ASSERT_TRUE(command->Init());
+
+  MessageSharedPtr response_msg_vr =
+      CreateMessage(smart_objects::SmartType_Map);
+  (*response_msg_vr)[strings::params][hmi_response::code] =
+      hmi_apis::Common_Result::SUCCESS;
+  (*response_msg_vr)[strings::msg_params][strings::choice_id] = vr_choice_id2;
+
+  MessageSharedPtr response_msg_ui =
+      CreateMessage(smart_objects::SmartType_Map);
+  (*response_msg_ui)[strings::params][hmi_response::code] =
+      hmi_apis::Common_Result::SUCCESS;
+  (*response_msg_ui)[strings::msg_params][strings::choice_id] = ui_choice_id1;
+
+  am::event_engine::Event event_vr(hmi_apis::FunctionID::VR_PerformInteraction);
+  event_vr.set_smart_object(*response_msg_vr);
+
+  am::event_engine::Event event_ui(hmi_apis::FunctionID::UI_PerformInteraction);
+  event_ui.set_smart_object(*response_msg_ui);
+
+  MessageSharedPtr response_to_mobile;
+
+  EXPECT_CALL(
+      mock_rpc_service_,
+      ManageMobileCommand(_, am::commands::Command::CommandSource::SOURCE_SDL))
+      .WillOnce(DoAll(SaveArg<0>(&response_to_mobile), Return(true)));
+
+  command->on_event(event_ui);
+  command->on_event(event_vr);
+
+  EXPECT_EQ(
+      ui_choice_id1,
+      (*response_to_mobile)[strings::msg_params][strings::choice_id].asInt());
+}
+
+TEST_F(PerformInteractionRequestTest, OnEven_BOTHMode_VRChoiceIdReceivedFirst) {
+  MessageSharedPtr msg_from_mobile =
+      CreateMessage(smart_objects::SmartType_Map);
+  (*msg_from_mobile)[strings::params][strings::correlation_id] = kCorrelationId;
+  (*msg_from_mobile)[strings::params][strings::connection_key] = kConnectionKey;
+  (*msg_from_mobile)[strings::msg_params][strings::interaction_mode] =
+      mobile_apis::InteractionMode::BOTH;
+  std::shared_ptr<PerformInteractionRequest> command =
+      CreateCommand<PerformInteractionRequest>(msg_from_mobile);
+
+  ASSERT_TRUE(command->Init());
+
+  MessageSharedPtr response_msg_vr =
+      CreateMessage(smart_objects::SmartType_Map);
+  (*response_msg_vr)[strings::params][hmi_response::code] =
+      hmi_apis::Common_Result::SUCCESS;
+  (*response_msg_vr)[strings::msg_params][strings::choice_id] = vr_choice_id2;
+
+  MessageSharedPtr response_msg_ui =
+      CreateMessage(smart_objects::SmartType_Map);
+  (*response_msg_ui)[strings::params][hmi_response::code] =
+      hmi_apis::Common_Result::SUCCESS;
+  (*response_msg_ui)[strings::msg_params][strings::choice_id] = ui_choice_id1;
+
+  am::event_engine::Event event_vr(hmi_apis::FunctionID::VR_PerformInteraction);
+  event_vr.set_smart_object(*response_msg_vr);
+
+  am::event_engine::Event event_ui(hmi_apis::FunctionID::UI_PerformInteraction);
+  event_ui.set_smart_object(*response_msg_ui);
+
+  MessageSharedPtr request_to_hmi;
+  EXPECT_CALL(mock_rpc_service_,
+              ManageHMICommand(
+                  _, am::commands::Command::CommandSource::SOURCE_SDL_TO_HMI))
+      .WillOnce(DoAll(SaveArg<0>(&request_to_hmi), Return(true)));
+
+  command->on_event(event_vr);
+  EXPECT_EQ(hmi_apis::FunctionID::UI_ClosePopUp,
+            (*request_to_hmi)[strings::params][strings::function_id].asInt());
+
+  MessageSharedPtr response_to_mobile;
+  EXPECT_CALL(
+      mock_rpc_service_,
+      ManageMobileCommand(_, am::commands::Command::CommandSource::SOURCE_SDL))
+      .WillOnce(DoAll(SaveArg<0>(&response_to_mobile), Return(true)));
+  command->on_event(event_ui);
+
+  EXPECT_EQ(
+      vr_choice_id2,
+      (*response_to_mobile)[strings::msg_params][strings::choice_id].asInt());
 }
 
 TEST_F(PerformInteractionRequestTest,
