@@ -1188,7 +1188,7 @@ void PerformInteractionRequest::SetChoiceIdToResponseMsgParams(
     } break;
     case mobile_apis::InteractionMode::eType::VR_ONLY:
       if (INVALID_CHOICE_ID != vr_choice_id_received_) {
-        choice_id = ui_choice_id_received_;
+        choice_id = vr_choice_id_received_;
       }
       break;
     case mobile_apis::InteractionMode::eType::BOTH:
