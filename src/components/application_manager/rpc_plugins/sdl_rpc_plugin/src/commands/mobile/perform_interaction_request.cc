@@ -1127,13 +1127,13 @@ PerformInteractionRequest::PrepareResultCodeForResponse(
 bool PerformInteractionRequest::PrepareResultForMobileResponse(
     app_mngr::commands::ResponseInfo& ui_response,
     app_mngr::commands::ResponseInfo& vr_response) const {
-  if (mobile_apis::InteractionMode::VR_ONLY) {
+  if (mobile_apis::InteractionMode::VR_ONLY == interaction_mode_) {
     return vr_response.is_ok;
   }
-  if (mobile_apis::InteractionMode::MANUAL_ONLY) {
+  if (mobile_apis::InteractionMode::MANUAL_ONLY == interaction_mode_) {
     return ui_response.is_ok;
   }
-  if (mobile_apis::InteractionMode::BOTH) {
+  if (mobile_apis::InteractionMode::BOTH == interaction_mode_) {
     return (vr_response.is_ok || ui_response.is_ok);
   }
 
