@@ -367,7 +367,7 @@ bool PerformInteractionRequest::ProcessVRResponse(
     return false;
   }
 
-  if (FirstAnsweredInterface::VR == first_responder_) {
+  if (!ui_choice_id_received_) {
     // After VR.PerformInteraction response HMI should close UI popup window
     // if UI.PerformInteraction response comes
     // after VR.PerformInteraction response.
