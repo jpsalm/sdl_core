@@ -187,7 +187,8 @@ TEST_F(PerformInteractionRequestTest, OnTimeout_VR_GENERIC_ERROR) {
       static_cast<int32_t>(am::mobile_api::Result::GENERIC_ERROR));
 }
 
-TEST_F(PerformInteractionRequestTest, OnEven_BOTHMode_UIChoiceIdReceivedFirst) {
+TEST_F(PerformInteractionRequestTest,
+       OnEvent_BOTHMode_UIChoiceIdReceivedFirst) {
   MessageSharedPtr msg_from_mobile =
       CreateMessage(smart_objects::SmartType_Map);
   (*msg_from_mobile)[strings::params][strings::correlation_id] = kCorrelationId;
@@ -232,7 +233,8 @@ TEST_F(PerformInteractionRequestTest, OnEven_BOTHMode_UIChoiceIdReceivedFirst) {
       (*response_to_mobile)[strings::msg_params][strings::choice_id].asInt());
 }
 
-TEST_F(PerformInteractionRequestTest, OnEven_BOTHMode_VRChoiceIdReceivedFirst) {
+TEST_F(PerformInteractionRequestTest,
+       OnEvent_BOTHMode_VRChoiceIdReceivedFirst) {
   MessageSharedPtr msg_from_mobile =
       CreateMessage(smart_objects::SmartType_Map);
   (*msg_from_mobile)[strings::params][strings::correlation_id] = kCorrelationId;
