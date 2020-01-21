@@ -1117,55 +1117,39 @@ PerformInteractionRequest::PrepareResultCodeForResponse(
   LOG4CXX_DEBUG(
       logger_, "InteractionMode = " << static_cast<int32_t>(interaction_mode_));
 
-  auto result = mobile_api::Result::INVALID_ENUM;
-  switch (interaction_mode_) {
-    case mobile_apis::InteractionMode::VR_ONLY: {
-      result = MessageHelper::HMIToMobileResult(vr_result_code_);
-      break;
+  if (mobile_apis::InteractionMode::VR_ONLY == interaction_mode_) {
+    return MessageHelper::HMIToMobileResult(vr_result_code_);
+  }
+  if (mobile_apis::InteractionMode::MANUAL_ONLY == interaction_mode_) {
+    return MessageHelper::HMIToMobileResult(ui_result_code_);
+  }
+  if (mobile_apis::InteractionMode::BOTH == interaction_mode_) {
+    if (IsVRPerformInteractionResponseSuccessfulInBothMode()) {
+      return MessageHelper::HMIToMobileResult(vr_result_code_);
+    } else {
+      return MessageHelper::HMIToMobileResult(ui_result_code_);
     }
-
-    case mobile_apis::InteractionMode::MANUAL_ONLY: {
-      result = MessageHelper::HMIToMobileResult(ui_result_code_);
-      break;
-    }
-
-    case mobile_apis::InteractionMode::BOTH: {
-      if (IsVRPerformInteractionResponseSuccessfulInBothMode()) {
-        return MessageHelper::HMIToMobileResult(vr_result_code_);
-      } else {
-        return MessageHelper::HMIToMobileResult(ui_result_code_);
-      }
-      break;
-    }
-
-    default:
-      result = CommandRequestImpl::PrepareResultCodeForResponse(ui_response,
-                                                                vr_response);
   }
 
-  return result;
+  return CommandRequestImpl::PrepareResultCodeForResponse(ui_response,
+                                                          vr_response);
 }
 
 bool PerformInteractionRequest::PrepareResultForMobileResponse(
     app_mngr::commands::ResponseInfo& ui_response,
     app_mngr::commands::ResponseInfo& vr_response) const {
-  bool result = false;
-  switch (interaction_mode_) {
-    case mobile_apis::InteractionMode::VR_ONLY:
-      result = vr_response.is_ok;
-      break;
-    case mobile_apis::InteractionMode::MANUAL_ONLY:
-      result = ui_response.is_ok;
-      break;
-    case mobile_apis::InteractionMode::BOTH:
-      result = (vr_response.is_ok || ui_response.is_ok);
-      break;
-    default:
-      result = CommandRequestImpl::PrepareResultForMobileResponse(ui_response,
-                                                                  vr_response);
+  if (mobile_apis::InteractionMode::VR_ONLY) {
+    return vr_response.is_ok;
+  }
+  if (mobile_apis::InteractionMode::MANUAL_ONLY) {
+    return ui_response.is_ok;
+  }
+  if (mobile_apis::InteractionMode::BOTH) {
+    return (vr_response.is_ok || ui_response.is_ok);
   }
 
-  return result;
+  return CommandRequestImpl::PrepareResultForMobileResponse(ui_response,
+                                                            vr_response);
 }
 
 bool PerformInteractionRequest::
@@ -1180,32 +1164,24 @@ void PerformInteractionRequest::SetChoiceIdToResponseMsgParams(
     ns_smart_device_link::ns_smart_objects::SmartObject& msg_param) {
   LOG4CXX_AUTO_TRACE(logger_);
 
-  std::int32_t choice_id = INVALID_CHOICE_ID;
+  msg_param[strings::choice_id] = INVALID_CHOICE_ID;
 
-  switch (interaction_mode_) {
-    case mobile_apis::InteractionMode::eType::MANUAL_ONLY: {
-      choice_id = ui_choice_id_received_;
-      break;
-    }
-    case mobile_apis::InteractionMode::eType::VR_ONLY: {
-      choice_id = vr_choice_id_received_;
-      break;
-    }
-    case mobile_apis::InteractionMode::eType::BOTH: {
-      choice_id = (first_responder_ == FirstAnsweredInterface::UI) &&
-                          (INVALID_CHOICE_ID != ui_choice_id_received_)
-                      ? ui_choice_id_received_
-                      : vr_choice_id_received_;
-      break;
-    }
-    default:
-      LOG4CXX_DEBUG(logger_, "Invalid interaction mode: " << interaction_mode_);
-      return;
+  if (mobile_apis::InteractionMode::eType::MANUAL_ONLY == interaction_mode_) {
+    msg_param[strings::choice_id] = ui_choice_id_received_;
   }
 
-  msg_param[strings::choice_id] = choice_id;
+  if (mobile_apis::InteractionMode::eType::VR_ONLY == interaction_mode_) {
+    msg_param[strings::choice_id] = vr_choice_id_received_;
+  }
+
+  if (mobile_apis::InteractionMode::eType::BOTH == interaction_mode_) {
+    msg_param[strings::choice_id] =
+        (INVALID_CHOICE_ID != ui_choice_id_received_) ? ui_choice_id_received_
+                                                      : vr_choice_id_received_;
+  } else {
+    LOG4CXX_DEBUG(logger_, "Invalid interaction mode: " << interaction_mode_);
+  }
 }
 
 }  // namespace commands
-
 }  // namespace sdl_rpc_plugin
