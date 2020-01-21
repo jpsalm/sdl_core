@@ -295,7 +295,6 @@ class PerformInteractionRequest
   hmi_apis::Common_Result::eType ui_result_code_;
   std::string ui_info_;
   std::string vr_info_;
-  smart_objects::SmartObject vr_params_;
   FirstAnsweredInterface first_responder_;
 
   DISALLOW_COPY_AND_ASSIGN(PerformInteractionRequest);
