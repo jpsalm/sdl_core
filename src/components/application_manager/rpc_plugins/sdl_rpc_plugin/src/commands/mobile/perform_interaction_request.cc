@@ -274,9 +274,7 @@ void PerformInteractionRequest::on_event(const event_engine::Event& event) {
       vr_result_code_ = static_cast<hmi_apis::Common_Result::eType>(
           message[strings::params][hmi_response::code].asUInt());
       GetInfo(message, vr_info_);
-      const bool response_process_result =
-          ProcessVRResponse(event.smart_object(), msg_param);
-      if (response_process_result) {
+      if (ProcessVRResponse(event.smart_object(), msg_param)) {
         return;
       }
       break;
