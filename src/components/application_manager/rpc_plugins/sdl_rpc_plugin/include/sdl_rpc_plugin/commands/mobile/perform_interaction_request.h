@@ -54,14 +54,6 @@ class PerformInteractionRequest
     : public app_mngr::commands::CommandRequestImpl {
  public:
   /**
-   * @brief Enum, defines which interface, VR or UI, sent PerformInteraction
-   * response first. In case of interaction_mode_ == InteractionMode::VR_ONLY
-   * SDL must know which interface responsed first. If first responsed interface
-   * is VR, then SDL should trigger closing UI popup window by sending
-   * UI_ClosePopUp request to HMI.
-   */
-  enum class FirstAnsweredInterface { NONE, UI, VR };
-  /**
    * @brief PerformInteractionRequest class constructor
    *
    * @param message Incoming SmartObject message
@@ -268,13 +260,6 @@ class PerformInteractionRequest
   void SendBothModeResponse(const smart_objects::SmartObject& msg_param);
 
   /**
-   * @brief Check if VR.PerformInteraction response successful in
-   * InteractionMode::BOTH
-   * @return true, if successful, otherwise - false.
-   */
-  bool IsVRPerformInteractionResponseSuccessfulInBothMode();
-
-  /**
    * @brief Sets the choice according to the current interaction mode and first
    * received choice id (UI or VR).
    *
@@ -295,7 +280,6 @@ class PerformInteractionRequest
   hmi_apis::Common_Result::eType ui_result_code_;
   std::string ui_info_;
   std::string vr_info_;
-  FirstAnsweredInterface first_responder_;
 
   DISALLOW_COPY_AND_ASSIGN(PerformInteractionRequest);
 };

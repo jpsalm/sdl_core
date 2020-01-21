@@ -78,8 +78,7 @@ PerformInteractionRequest::PerformInteractionRequest(
     , vr_response_received_(false)
     , app_pi_was_active_before_(false)
     , vr_result_code_(hmi_apis::Common_Result::INVALID_ENUM)
-    , ui_result_code_(hmi_apis::Common_Result::INVALID_ENUM)
-    , first_responder_(FirstAnsweredInterface::NONE) {
+    , ui_result_code_(hmi_apis::Common_Result::INVALID_ENUM) {
   subscribe_on_event(hmi_apis::FunctionID::UI_OnResetTimeout);
   subscribe_on_event(hmi_apis::FunctionID::VR_OnCommand);
   subscribe_on_event(hmi_apis::FunctionID::Buttons_OnButtonPress);
@@ -250,10 +249,6 @@ void PerformInteractionRequest::on_event(const event_engine::Event& event) {
       EndAwaitForInterface(HmiInterfaces::HMI_INTERFACE_UI);
       ui_response_received_ = true;
 
-      if (FirstAnsweredInterface::NONE == first_responder_) {
-        first_responder_ = FirstAnsweredInterface::UI;
-      }
-
       unsubscribe_from_event(hmi_apis::FunctionID::UI_PerformInteraction);
       ui_result_code_ = static_cast<hmi_apis::Common_Result::eType>(
           message[strings::params][hmi_response::code].asUInt());
@@ -265,10 +260,6 @@ void PerformInteractionRequest::on_event(const event_engine::Event& event) {
       LOG4CXX_DEBUG(logger_, "Received VR_PerformInteraction");
       EndAwaitForInterface(HmiInterfaces::HMI_INTERFACE_VR);
       vr_response_received_ = true;
-
-      if (FirstAnsweredInterface::NONE == first_responder_) {
-        first_responder_ = FirstAnsweredInterface::VR;
-      }
 
       unsubscribe_from_event(hmi_apis::FunctionID::VR_PerformInteraction);
       vr_result_code_ = static_cast<hmi_apis::Common_Result::eType>(
@@ -1148,14 +1139,6 @@ bool PerformInteractionRequest::PrepareResultForMobileResponse(
 
   return CommandRequestImpl::PrepareResultForMobileResponse(ui_response,
                                                             vr_response);
-}
-
-bool PerformInteractionRequest::
-    IsVRPerformInteractionResponseSuccessfulInBothMode() {
-  using namespace mobile_apis;
-  app_mngr::commands::ResponseInfo vr_perform_info(
-      vr_result_code_, HmiInterfaces::HMI_INTERFACE_VR, application_manager_);
-  return (vr_perform_info.is_ok && InteractionMode::BOTH == interaction_mode_);
 }
 
 void PerformInteractionRequest::SetChoiceIdToResponseMsgParams(
