@@ -463,14 +463,14 @@ void PerformInteractionRequest::ProcessUIResponse(
 
     // result code must be GENERIC_ERROR in case wrong choice_id
     if (msg_params.keyExists(strings::choice_id)) {
-      const std::int32_t ui_choise_id =
+      const std::int32_t ui_choice_id =
           static_cast<std::int32_t>(msg_params[strings::choice_id].asInt());
 
-      if (!CheckChoiceIDFromResponse(app, ui_choise_id)) {
+      if (!CheckChoiceIDFromResponse(app, ui_choice_id)) {
         ui_result_code_ = hmi_apis::Common_Result::GENERIC_ERROR;
         ui_info_ = "Wrong choiceID was received from HMI";
       } else {
-        ui_choice_id_received_ = ui_choise_id;
+        ui_choice_id_received_ = ui_choice_id;
         msg_params[strings::trigger_source] =
             mobile_apis::TriggerSource::TS_MENU;
       }
