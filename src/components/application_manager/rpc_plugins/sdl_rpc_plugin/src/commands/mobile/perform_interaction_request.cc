@@ -34,7 +34,6 @@
 #include "sdl_rpc_plugin/commands/mobile/perform_interaction_request.h"
 
 #include <string.h>
-#include <limits>
 #include <numeric>
 #include <string>
 
