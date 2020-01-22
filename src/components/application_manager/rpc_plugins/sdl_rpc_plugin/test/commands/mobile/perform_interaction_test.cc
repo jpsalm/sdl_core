@@ -257,7 +257,8 @@ TEST_F(PerformInteractionRequestTest,
       CreateMessage(smart_objects::SmartType_Map);
   (*response_msg_ui)[strings::params][hmi_response::code] =
       hmi_apis::Common_Result::SUCCESS;
-  (*response_msg_ui)[strings::msg_params][strings::choice_id] = kInvalidChoiceId;
+  (*response_msg_ui)[strings::msg_params][strings::choice_id] =
+      kInvalidChoiceId;
 
   am::event_engine::Event event_vr(hmi_apis::FunctionID::VR_PerformInteraction);
   event_vr.set_smart_object(*response_msg_vr);
