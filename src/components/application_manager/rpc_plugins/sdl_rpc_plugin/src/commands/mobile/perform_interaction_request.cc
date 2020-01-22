@@ -1115,7 +1115,7 @@ PerformInteractionRequest::PrepareResultCodeForResponse(
     return MessageHelper::HMIToMobileResult(ui_result_code_);
   }
   if (mobile_apis::InteractionMode::BOTH == interaction_mode_) {
-    return (INVALID_CHOICE_ID != ui_choice_id_received_)
+    return (ui_result_code_ == hmi_apis::Common_Result::eType::SUCCESS)
                ? MessageHelper::HMIToMobileResult(ui_result_code_)
                : MessageHelper::HMIToMobileResult(vr_result_code_);
   }
