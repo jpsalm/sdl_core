@@ -260,6 +260,11 @@ class PerformInteractionRequest
   void SendBothModeResponse(const smart_objects::SmartObject& msg_param);
 
   /**
+   * @brief Sends UiClosePopUp request to HMI
+   */
+  void SendClosePopupRequestToHMI();
+
+  /**
    * @brief Sets the choice according to the current interaction mode and first
    * received choice id (UI or VR).
    *

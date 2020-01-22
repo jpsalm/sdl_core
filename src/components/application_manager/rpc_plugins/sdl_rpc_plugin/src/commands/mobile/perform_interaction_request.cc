@@ -363,11 +363,7 @@ bool PerformInteractionRequest::ProcessVRResponse(
     // if UI.PerformInteraction response comes
     // after VR.PerformInteraction response.
     // In this case SDL should send UI_ClosePopUp request.
-    const std::string method_name = "UI.PerformInteraction";
-    smart_objects::SmartObject hmi_request_params =
-        smart_objects::SmartObject(smart_objects::SmartType_Map);
-    hmi_request_params[hmi_request::method_name] = method_name;
-    SendHMIRequest(hmi_apis::FunctionID::UI_ClosePopUp, &hmi_request_params);
+    SendClosePopupRequestToHMI();
   }
 
   const SmartObject& hmi_msg_params = message[strings::msg_params];
@@ -958,11 +954,15 @@ bool PerformInteractionRequest::IsWhiteSpaceExist() {
 void PerformInteractionRequest::TerminatePerformInteraction() {
   LOG4CXX_AUTO_TRACE(logger_);
 
+  SendClosePopupRequestToHMI();
+  DisablePerformInteraction();
+}
+
+void PerformInteractionRequest::SendClosePopupRequestToHMI() {
   smart_objects::SmartObject msg_params =
       smart_objects::SmartObject(smart_objects::SmartType_Map);
   msg_params[hmi_request::method_name] = "UI.PerformInteraction";
   SendHMIRequest(hmi_apis::FunctionID::UI_ClosePopUp, &msg_params);
-  DisablePerformInteraction();
 }
 
 bool PerformInteractionRequest::CheckChoiceIDFromResponse(
