@@ -76,6 +76,7 @@ const uint32_t kCmdId = 1u;
 const uint32_t kConnectionKey = 2u;
 const int32_t ui_choice_id1 = 1u;
 const int32_t vr_choice_id2 = 2u;
+const int32_t kInvalidChoiceId = -1;
 }  // namespace
 
 class PerformInteractionRequestTest
@@ -256,7 +257,7 @@ TEST_F(PerformInteractionRequestTest,
       CreateMessage(smart_objects::SmartType_Map);
   (*response_msg_ui)[strings::params][hmi_response::code] =
       hmi_apis::Common_Result::SUCCESS;
-  (*response_msg_ui)[strings::msg_params][strings::choice_id] = ui_choice_id1;
+  (*response_msg_ui)[strings::msg_params][strings::choice_id] = kInvalidChoiceId;
 
   am::event_engine::Event event_vr(hmi_apis::FunctionID::VR_PerformInteraction);
   event_vr.set_smart_object(*response_msg_vr);
