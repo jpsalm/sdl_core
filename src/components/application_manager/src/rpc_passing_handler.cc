@@ -30,6 +30,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+/* Turn off -Werror=maybe-uninitialized erros in gcc 8.3 */
+#pragma GCC diagnostic warning "-Wuninitialized"
+
 #include "application_manager/help_prompt_manager_impl.h"
 
 #include <algorithm>

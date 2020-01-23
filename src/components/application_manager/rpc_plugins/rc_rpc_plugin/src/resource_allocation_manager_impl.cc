@@ -30,6 +30,9 @@
  POSSIBILITY OF SUCH DAMAGE.
  */
 
+/* Turn off -Werror=maybe-uninitialized erros in gcc 8.3 */
+#pragma GCC diagnostic warning "-Wuninitialized"
+
 #include "rc_rpc_plugin/resource_allocation_manager_impl.h"
 #include "application_manager/application.h"
 #include "application_manager/application_manager.h"
