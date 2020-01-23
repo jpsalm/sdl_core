@@ -159,16 +159,16 @@ endif()
 target_link_libraries(${PROJECT} ${LIBRARIES})
 
 add_dependencies(${PROJECT} Policy)
-file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/build_config.txt DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
-file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/log4cxx.properties DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
-file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/audio.8bit.wav DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
-file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/test.txt DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
-file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/smartDeviceLink.ini DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
-file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/hmi_capabilities.json DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
-file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/sdl_preloaded_pt.json DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
-file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/sample_policy_manager.py DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
-file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/start.sh DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
-file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/start_external_proprietary.sh DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/build_config.txt DESTINATION ${CMAKE_INSTALL_SYSCONFDIR}/smartdevicelink COMPONENT config)
+install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/log4cxx.properties DESTINATION ${CMAKE_INSTALL_SYSCONFDIR}/smartdevicelink COMPONENT config)
+install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/audio.8bit.wav DESTINATION ${CMAKE_INSTALL_SYSCONFDIR}/smartdevicelink COMPONENT config)
+install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/test.txt DESTINATION ${CMAKE_INSTALL_SYSCONFDIR}/smartdevicelink COMPONENT config)
+install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/smartDeviceLink.ini DESTINATION ${CMAKE_INSTALL_SYSCONFDIR}/smartdevicelink COMPONENT config)
+install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/hmi_capabilities.json DESTINATION ${CMAKE_INSTALL_SYSCONFDIR}/smartdevicelink COMPONENT config)
+install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/sdl_preloaded_pt.json DESTINATION ${CMAKE_INSTALL_SYSCONFDIR}/smartdevicelink COMPONENT config)
+install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/sample_policy_manager.py DESTINATION ${CMAKE_INSTALL_SYSCONFDIR}/smartdevicelink COMPONENT config)
+install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/start.sh DESTINATION ${CMAKE_INSTALL_SYSCONFDIR}/smartdevicelink COMPONENT config)
+install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/start_external_proprietary.sh DESTINATION ${CMAKE_INSTALL_SYSCONFDIR}/smartdevicelink COMPONENT config)
 if (CMAKE_SYSTEM_NAME STREQUAL "QNX")
   file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/init_policy.sh DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 endif ()
@@ -220,12 +220,12 @@ install(
   FILES build_config.txt log4cxx.properties audio.8bit.wav test.txt smartDeviceLink.ini
     hmi_capabilities.json sdl_preloaded_pt.json sample_policy_manager.py
     ${CMAKE_SOURCE_DIR}/mycert.pem ${CMAKE_SOURCE_DIR}/mykey.pem
-  DESTINATION bin
+  DESTINATION ${CMAKE_INSTALL_SYSCONFDIR}/smartdevicelink
 )
 
 install(
     FILES sdl_preloaded_pt.json
-    DESTINATION bin
+    DESTINATION ${CMAKE_INSTALL_SYSCONFDIR}/smartdevicelink
 )
 
 if (${QT_HMI})
