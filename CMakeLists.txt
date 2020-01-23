@@ -428,6 +428,7 @@ if(CMAKE_SYSTEM_NAME STREQUAL "QNX")
 endif()
 
 SET(RPATH_DIRECTORIES
+  ${CMAKE_INSTALL_LIBDIR}
   ${CMAKE_INSTALL_PREFIX}/bin/plugins
   /usr/local/lib
   /usr/local
