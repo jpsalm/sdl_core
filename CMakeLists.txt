@@ -453,8 +453,9 @@ endif()
 add_subdirectory(./src/3rd_party-static)
 
 # --- Tools
-add_subdirectory(./tools)
-
+# inactive building tools now
+#add_subdirectory(./tools)
+ 
 # --- Components
 add_subdirectory(./src/components)
 
