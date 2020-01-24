@@ -133,7 +133,13 @@ int32_t main(int32_t argc, char** argv) {
 
   // --------------------------------------------------------------------------
   // Logger initialization
-  INIT_LOGGER("log4cxx.properties", profile_instance.logs_enabled());
+  const char* log4cxx_path = getenv("SDL_LOG4CXX_PROPERTIES_FILE");
+  if (!log4cxx_path) {
+    INIT_LOGGER("log4cxx.properties", profile_instance.logs_enabled());
+  } else {
+    std::string log4cxx_properties = std::string(log4cxx_path);
+    INIT_LOGGER(log4cxx_properties, profile_instance.logs_enabled());
+  }
 
   threads::Thread::SetNameForId(threads::Thread::CurrentId(), "MainThread");
 
