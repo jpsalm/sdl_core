@@ -200,8 +200,8 @@ if ((NOT "${BSON_FOUND}") OR ("${BSON_VERSION}" VERSION_LESS "1.2.0"))
       INSTALL_COMMAND ${BSON_INSTALL_COMMAND}
       UPDATE_COMMAND git pull)
 else()
-  set(BSON_LIBS_DIRECTORY ${BSON_LIBDIR} CACHE INTERNAL "Installation path of bson libraries" FORCE)
-  set(EMHASHMAP_LIBS_DIRECTORY ${BSON_LIBDIR} CACHE INTERNAL "Installation path of emashmap libraries" FORCE)
+  set(BSON_LIBS_DIRECTORY ${3RD_PARTY_INSTALL_PREFIX}/${BSON_LIBDIR} CACHE INTERNAL "Installation path of bson libraries" FORCE)
+  set(EMHASHMAP_LIBS_DIRECTORY ${3RD_PARTY_INSTALL_PREFIX}/${BSON_LIBDIR} CACHE INTERNAL "Installation path of emashmap libraries" FORCE)
   add_custom_target(
       libbson
       DEPENDS ${BSON_LIBS_DIRECTORY}
