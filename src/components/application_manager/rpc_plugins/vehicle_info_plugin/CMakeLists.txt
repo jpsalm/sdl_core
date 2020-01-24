@@ -65,7 +65,7 @@ add_library(vehicle_info_plugin SHARED "src/vehicle_info_plugin.cc" )
 target_link_libraries(vehicle_info_plugin vehicle_info_plugin_static)
 
 
-set(INSTALL_DESTINATION bin)
+set(INSTALL_DESTINATION ${CMAKE_INSTALL_LIBDIR})
 
 install(TARGETS vehicle_info_plugin
   DESTINATION ${INSTALL_DESTINATION}

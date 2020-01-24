@@ -46,7 +46,7 @@ target_link_libraries(appenders ${LIBRARIES})
 add_dependencies(appenders install-3rd_party_logger)
 
 install(TARGETS appenders
-  DESTINATION bin
+  DESTINATION ${CMAKE_INSTALL_LIBDIR}
   PERMISSIONS
     OWNER_READ OWNER_WRITE OWNER_EXECUTE
     GROUP_READ GROUP_EXECUTE

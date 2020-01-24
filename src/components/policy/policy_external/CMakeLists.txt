@@ -31,7 +31,7 @@
 include(${CMAKE_SOURCE_DIR}/tools/cmake/helpers/generators.cmake)
 
 # --- Policy
-set(install_destination bin)
+set(install_destination ${CMAKE_INSTALL_LIBDIR})
 set(copy_destination ${CMAKE_BINARY_DIR}/src/appMain)
 set(library_name ${CMAKE_SHARED_LIBRARY_PREFIX}Policy${CMAKE_SHARED_LIBRARY_SUFFIX})
 
@@ -140,7 +140,7 @@ add_custom_target(copy_library_Policy ALL
     COMMENT "Copying library ${library_name}")
 
 install(TARGETS Policy
-  DESTINATION ${install_destination}
+  DESTINATION ${CMAKE_INSTALL_LIBDIR}
   PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE
     GROUP_READ GROUP_EXECUTE
     WORLD_READ WORLD_EXECUTE

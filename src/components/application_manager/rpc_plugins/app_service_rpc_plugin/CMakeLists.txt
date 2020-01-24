@@ -73,7 +73,7 @@ add_library("app_service_rpc_plugin" SHARED "src/app_service_rpc_plugin.cc")
 target_link_libraries("app_service_rpc_plugin" app_service_rpc_plugin_static)
 
 
-set(INSTALL_DESTINATION bin)
+set(INSTALL_DESTINATION ${CMAKE_INSTALL_LIBDIR})
 
 install(TARGETS app_service_rpc_plugin
   DESTINATION ${INSTALL_DESTINATION}

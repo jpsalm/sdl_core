@@ -70,7 +70,7 @@ add_library("rc_rpc_plugin" SHARED "src/rc_rpc_plugin.cc")
 target_link_libraries("rc_rpc_plugin" rc_rpc_plugin_static)
 
 
-set(INSTALL_DESTINATION bin)
+set(INSTALL_DESTINATION ${CMAKE_INSTALL_LIBDIR})
 
 install(TARGETS rc_rpc_plugin
   DESTINATION ${INSTALL_DESTINATION}

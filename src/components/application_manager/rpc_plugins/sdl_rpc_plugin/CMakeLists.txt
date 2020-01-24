@@ -73,7 +73,7 @@ target_link_libraries("sdl_rpc_plugin_static" ${LIBRARIES})
 add_library("sdl_rpc_plugin" SHARED "src/sdl_rpc_plugin.cc")
 target_link_libraries("sdl_rpc_plugin" sdl_rpc_plugin_static)
 
-set(INSTALL_DESTINATION bin)
+set(INSTALL_DESTINATION ${CMAKE_INSTALL_LIBDIR})
 
 install(TARGETS sdl_rpc_plugin
   DESTINATION ${INSTALL_DESTINATION}
